@@ -4,8 +4,8 @@ class Completed_Items_Form extends React.Component {
   
   constructor(props) {
     super(props);
-    this.state = {selectedItem: 1, desc:'', days_total: null, location:'', totalToDate: 20, inspectorId: null,response:null};
-    this.itemList= [];
+    this.state = {selectedItem: null, desc:'',init_total_todate:0, days_total: null, location:'', totalToDate: 0, inspectorId: null,response:null};
+    this.itemList = [];
     this.handleItemChange = this.handleItemChange.bind(this);
     this.handleDescChange = this.handleDescChange.bind(this);
     this.handleLocChange = this.handleLocChange.bind(this);
@@ -15,7 +15,12 @@ class Completed_Items_Form extends React.Component {
   }
 
   handleItemChange(event) {
-    this.setState({selectedItem: event.target.value});
+    
+    for(let i in this.itemList){ 
+      if(this.itemList[i].item==parseInt(event.target.value)){
+        this.setState({selectedItem: event.target.value, init_total_todate: this.itemList[i].to_date_quantity,totalToDate: this.itemList[i].to_date_quantity});
+      }
+    }
   }
   handleDescChange(event) {
     this.setState({desc: event.target.value});
@@ -24,7 +29,12 @@ class Completed_Items_Form extends React.Component {
     this.setState({location: event.target.value});
   }
   handleDaysTotalChange(event) {
-    this.setState({days_total: parseFloat(event.target.value),totalToDate:this.state.totalToDate+parseFloat(event.target.value)});
+    console.log(event.target.value)
+    if(event.target.value===''){
+      this.setState({days_total: 0,totalToDate:this.state.init_total_todate+0});
+    }else{
+      this.setState({days_total: parseFloat(event.target.value),totalToDate:this.state.init_total_todate+parseFloat(event.target.value)});
+    }
   }
   async handleSubmit(event) {
     //alert('Form was submitted');
@@ -32,47 +42,51 @@ class Completed_Items_Form extends React.Component {
       event.preventDefault();
       let messageBody=JSON.stringify({
         item: this.state.selectedItem,
-        desccription: this.state.desc,
-        location: this.state.location,
+        description: this.state.desc,
+        locations: this.state.location,
         days_total: this.state.days_total,
-        date: new Date(),
-        inspectorId: this.state.inspectorId
+        updated_date: new Date(),
+        //inspectorId: this.state.inspectorId
       });
       console.log(messageBody);
       this.setState({response:"Form submitted sucessfully"});
-      /*
-      let res = await fetch("https://httpbin.org/post", {
+      
+      let res = await fetch("http://localhost:8080/api/v1/set_data", {
         method: "POST",
         body: messageBody,
+        mode:'cors',
+        headers:{
+          'Accept': 'application/json, text/plain',
+          'Content-Type': 'application/json;charset=UTF-8'
+        }
       });
 
-      let resJson = await res.json();
+      //let resJson = await res.json();
       if (res.status === 200) {
         
         this.setState({response:"Form submitted sucessfully"});
       } else {
         this.setState({response:"Error in form submission"});
       }
-      */
+      
     } catch (err) {
       console.log(err);
     }
   }
   componentDidMount(){
-    
-    fetch('./sample.json',{
+    fetch('http://localhost:8080/api/v1/get_total',{
       headers : { 
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-       }
-    }).then((response) => response.json())
+      },
+      mode: 'cors' // 'cors' by default
+    }).then((response) => 
+            response.json())
             .then((responseJson) => {
-              console.log(responseJson);
-              this.setState({ totalToDate : responseJson.items[0].totalToDate })
-              this.itemList=responseJson.items;
-            })
-            .catch((error) => {
-              console.error(error);
+              //console.log(responseJson.length());
+              this.itemList=Array.from(responseJson);
+              console.log(this.itemList)
+              this.setState({selectedItem:this.itemList[0].item , totalToDate : this.itemList[0].to_date_quantity })
             });
   }
   render() {
@@ -84,7 +98,7 @@ class Completed_Items_Form extends React.Component {
                     <label className="row m-3">
                         Item:
                         <select value={this.state.selectedItem} onChange={this.handleItemChange}>
-                            {this.itemList.map(item => (<option key={item.item} value={item.item}>{item.item}</option>))}
+                          {this.itemList.map(item => (<option key={item.item} value={item.item}>{item.item}</option>))}
                         </select>
                     </label>
                     <label className="row m-3">
