@@ -42,7 +42,7 @@ CREATE TABLE "grantee" (
   "workplace_id" int NOT NULL,
   "post_id" int NOT NULL,
   "email" varchar NOT NULL,
-  "phone" varhar NOT NULL,
+  "phone" varchar NOT NULL,
   "password" varchar NOT NULL
 );
 
